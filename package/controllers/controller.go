@@ -2,12 +2,13 @@ package controllers
 
 import(
 	"encoding/json"
-	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
+	"time"
+	"fmt"
 	"strconv"
 	"github.com/Uber0802/ad_server/package/utils"
 	"github.com/Uber0802/ad_server/package/models"
+    "github.com/Uber0802/ad_server/package/config"
 )
 
 var NewAd models.Ad
@@ -20,47 +21,41 @@ func CreateAd(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusOK)
 	w.Write(res)
 }
+func ListAds(w http.ResponseWriter, r *http.Request) {
+    db := config.GetDB()
+    var ads []models.Ad
+    var resultAds []models.Ad
 
-func GetAdByAge(w http.ResponseWriter, r *http.Request){
-	vars := mux.Vars(r)
-	Age := vars["Age"]
-	age, err := strconv.ParseInt(Age, 0, 0)
-	if err != nil {
-		fmt.Println("error while parsing")
-	}
-	AdDetails, _ := models.GetAdByAge(age)
-	res, _ := json.Marshal(AdDetails)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
+    // Parse query parameters
+    query := r.URL.Query()
+    offset, _ := strconv.Atoi(query.Get("offset"))
+    limit, _ := strconv.Atoi(query.Get("limit"))
+    age, _ := strconv.Atoi(query.Get("age"))
+    gender := query.Get("gender")
+    country := query.Get("country")
+    platform := query.Get("platform")
+
+    // Set defaults for offset and limit
+    if offset < 0 {
+        offset = 0
+    }
+    if limit < 1 || limit > 100 {
+        limit = 5
+    }
+
+    currentTime := time.Now()
+    db.Where("start_at <= ? AND end_at >= ?", currentTime, currentTime).
+        Order("end_at asc").Offset(offset).Limit(limit).Find(&ads)
+    
+    for _, ad := range ads {
+		fmt.Println(ad)
+        if ad.MatchesConditions(age, gender, country, platform) {
+            resultAds = append(resultAds, ad)
+        }
+    }
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]interface{}{"items": resultAds})
 }
 
-func GetAdByGender(w http.ResponseWriter, r *http.Request){
-	vars := mux.Vars(r)
-	gender := vars["Gender"]
-	AdDetails, _ := models.GetAdByGender(gender)
-	res, _ := json.Marshal(AdDetails)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
-}
 
-func GetAdByCountry(w http.ResponseWriter, r *http.Request){
-	vars := mux.Vars(r)
-	country := vars["Country"]
-	AdDetails, _ := models.GetAdByCountry(country)
-	res, _ := json.Marshal(AdDetails)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
-}
-
-func GetAdByPlatform(w http.ResponseWriter, r *http.Request){
-	vars := mux.Vars(r)
-	platform := vars["Platform"]
-	AdDetails, _ := models.GetAdByPlatform(platform)
-	res, _ := json.Marshal(AdDetails)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
-}
