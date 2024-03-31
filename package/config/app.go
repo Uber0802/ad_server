@@ -3,6 +3,7 @@ package config
 import(
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"log"
 )
 
 var (
@@ -15,6 +16,10 @@ func Connect(){
 		panic(err)
 	}
 	db = d
+	err = db.DB().Ping()
+	if err != nil {
+		log.Fatal("Failed to ping database:", err)
+	}
 }
 
 func GetDB() *gorm.DB{
