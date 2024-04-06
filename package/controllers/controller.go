@@ -1,17 +1,18 @@
 package controllers
 
 import(
-	"encoding/json"
 	"net/http"
 	"time"
 	"fmt"
 	"strconv"
 	"github.com/Uber0802/ad_server/package/utils"
 	"github.com/Uber0802/ad_server/package/models"
-    "github.com/Uber0802/ad_server/package/config"
+    	"github.com/Uber0802/ad_server/package/config"
+	jsoniter "github.com/json-iterator/go"
 )
 
 var NewAd models.Ad
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func CreateAd(w http.ResponseWriter, r *http.Request){
 	CreateAd := &models.Ad{} // recieve json
