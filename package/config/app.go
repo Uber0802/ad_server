@@ -20,6 +20,8 @@ func Connect(){
 	if err != nil {
 		log.Fatal("Failed to ping database:", err)
 	}
+	db.DB().SetMaxOpenConns(100)
+    	db.DB().SetMaxIdleConns(50)
 }
 
 func GetDB() *gorm.DB{
